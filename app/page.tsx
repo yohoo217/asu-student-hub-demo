@@ -33,8 +33,23 @@ type AcademicPrepPhase = { term: string; timing: string; outcome: string; action
 type GlossaryEntry = { label: string; definition: string };
 type FounderRoute = { label: string; stage: string; fit: string; requirements: string; reality: string; tone: "now" | "next" | "later" };
 type View = "home" | "tasks" | "courses" | "projects" | "people" | "plan" | "immigration" | "events" | "links";
+type PlannerSchedule = Record<string, string[]>;
 
 const CHECKLIST_KEY = "ian-asu-week4-dashboard-v1";
+const COURSE_PLANNER_KEY = "ian-asu-course-planner-v1";
+
+const PLANNER_TERMS = ["Spring 2027", "Summer 2027", "Fall 2027", "Spring 2028", "Summer 2028"];
+const COURSE_OPTIONS = [
+  "SER 501 · Advanced Data Structures and Algorithms", "SER 515 · Foundations of Software Engineering", "CSE 578 · Data Visualization", "CSE 584 / SER 584 · Internship", "SER 502 · Emerging Languages and Programming Paradigms", "CSE 572 · Data Mining", "CSE 571 · Artificial Intelligence", "MFG 523 · AI for Smart Manufacturing", "SER 517 · Engineering Project",
+];
+const DEFAULT_COURSE_PLAN: PlannerSchedule = {
+  "Spring 2027": ["SER 501 · Advanced Data Structures and Algorithms", "SER 515 · Foundations of Software Engineering", "CSE 578 · Data Visualization"],
+  "Summer 2027": ["CSE 584 / SER 584 · Internship"],
+  "Fall 2027": ["SER 502 · Emerging Languages and Programming Paradigms", "CSE 572 · Data Mining", "CSE 571 · Artificial Intelligence"],
+  "Spring 2028": ["MFG 523 · AI for Smart Manufacturing"],
+  "Summer 2028": ["SER 517 · Engineering Project"],
+};
+const IMMIGRATION_STAGE_OPTIONS = ["F-1 · 就學", "Post-completion OPT", "STEM OPT", "H-1B / cap-exempt 工作", "雇主 EB-2 / EB-3"];
 
 const TASKS: Task[] = [
   { id: "ser334-exercise", tag: "09/10 · 15:00", label: "SER 334 · Module 3 Exercise", note: "13:30 開放、90 分鐘；這是本週最早的硬截止。先確認 Canvas 的可作答時段與提交格式，課程內容與作答仍由你自行完成。", resources: [{ label: "開啟 SER 334 Assignments", href: "https://canvas.asu.edu/courses/266408/assignments" }, { label: "開啟 SER 334 Modules", href: "https://canvas.asu.edu/courses/266408/modules" }] },
@@ -218,25 +233,52 @@ function readStored(key: string) {
   try { const value = window.localStorage.getItem(key); return value ? (JSON.parse(value) as Record<string, boolean>) : {}; } catch { return {}; }
 }
 
+function readCoursePlan() {
+  try {
+    const value = window.localStorage.getItem(COURSE_PLANNER_KEY);
+    return value ? { ...DEFAULT_COURSE_PLAN, ...(JSON.parse(value) as PlannerSchedule) } : DEFAULT_COURSE_PLAN;
+  } catch { return DEFAULT_COURSE_PLAN; }
+}
+
 function GlossaryTerm({ label }: { label: string }) {
   const entry = IMMIGRATION_GLOSSARY.find((item) => item.label === label);
   if (!entry) return <>{label}</>;
   return <span className="glossary-term" tabIndex={0} data-tooltip={entry.definition} aria-label={`${label}：${entry.definition}`}>{label}</span>;
 }
 
+function CoursePlanner({ coursePlan, draggedCourse, onDragStart, onDrop }: { coursePlan: PlannerSchedule; draggedCourse: string | null; onDragStart: (course: string) => void; onDrop: (course: string, term: string) => void }) {
+  const assigned = new Set(Object.values(coursePlan).flat());
+  return <section className="course-planner" aria-labelledby="course-planner-title">
+    <div className="planner-heading"><div><p className="eyebrow">COURSE CONFIGURATOR</p><h3 id="course-planner-title">把課程拖到你想修的學期</h3></div><p>這是個人規劃草稿，會只儲存在這台裝置的瀏覽器；不會更改學校系統或 iPOS。</p></div>
+    <div className="planner-layout"><aside className="course-pool"><h4>可選課程</h4>{COURSE_OPTIONS.filter((course) => !assigned.has(course) || course === draggedCourse).map((course) => <button key={course} type="button" draggable onDragStart={() => onDragStart(course)} onClick={() => onDragStart(course)}>{course}<span>拖曳</span></button>)}</aside><div className="planner-terms">{PLANNER_TERMS.map((term) => <section key={term} className="planner-term" onDragOver={(event) => event.preventDefault()} onDrop={() => draggedCourse && onDrop(draggedCourse, term)}><h4>{term}</h4><div>{(coursePlan[term] ?? []).map((course) => <button key={course} type="button" draggable onDragStart={() => onDragStart(course)} onClick={() => onDragStart(course)}>{course}<span>移動</span></button>)}</div>{draggedCourse && <p>放到這裡</p>}</section>)}</div></div>
+  </section>;
+}
+
 export default function Home() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [ready, setReady] = useState(false);
+  const [coursePlan, setCoursePlan] = useState<PlannerSchedule>(DEFAULT_COURSE_PLAN);
+  const [plannerReady, setPlannerReady] = useState(false);
+  const [draggedCourse, setDraggedCourse] = useState<string | null>(null);
   const [view, setView] = useState<View>("home");
   const [immigrationScenario, setImmigrationScenario] = useState<ImmigrationScenario["id"]>("sponsor");
+  const [immigrationStage, setImmigrationStage] = useState(0);
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => { setChecked(readStored(CHECKLIST_KEY)); setReady(true); });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => { setCoursePlan(readCoursePlan()); setPlannerReady(true); });
     return () => window.cancelAnimationFrame(frame);
   }, []);
   useEffect(() => {
     if (!ready) return;
     try { window.localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checked)); } catch { /* session-only fallback */ }
   }, [checked, ready]);
+  useEffect(() => {
+    if (!plannerReady) return;
+    try { window.localStorage.setItem(COURSE_PLANNER_KEY, JSON.stringify(coursePlan)); } catch { /* session-only fallback */ }
+  }, [coursePlan, plannerReady]);
   const completed = useMemo(() => TASKS.filter((item) => checked[item.id]).length, [checked]);
   const toggle = (id: string) => setChecked((current) => ({ ...current, [id]: !current[id] }));
   const selectView = (next: View) => {
@@ -245,6 +287,14 @@ export default function Home() {
   };
   const taskById = (id: string) => TASKS.find((task) => task.id === id);
   const selectedImmigrationScenario = IMMIGRATION_SCENARIOS.find((scenario) => scenario.id === immigrationScenario) ?? IMMIGRATION_SCENARIOS[0];
+  const moveCourse = (course: string, destination: string) => {
+    setCoursePlan((current) => {
+      const next = Object.fromEntries(Object.entries(current).map(([term, list]) => [term, list.filter((item) => item !== course)])) as PlannerSchedule;
+      next[destination] = [...(next[destination] ?? []), course];
+      return next;
+    });
+    setDraggedCourse(null);
+  };
 
   return (
     <main>
@@ -266,7 +316,7 @@ export default function Home() {
 
         {view === "people" && <section className="workspace-panel" aria-labelledby="people-title"><div className="workspace-heading"><div><p className="eyebrow">RESEARCH FIT</p><h2 id="people-title">先聊這 5 位</h2></div><p>先從他們的研究與一個具體問題出發；展開卡片就有可直接修改後寄出的信。</p></div><div className="mentor-grid">{MENTORS.map((mentor) => <article className="mentor-card" key={mentor.name}><p className="mini-label">{mentor.role}</p><h3>{mentor.name}</h3><div className="focus-list">{mentor.fit.map((focus) => <span key={focus}>{focus}</span>)}</div><p><strong>{mentor.priority}</strong></p><div className="conversation-starter"><small>可以先問</small><strong>{mentor.question}</strong></div><details className="mentor-outreach"><summary>研究、論文方向與信件</summary><div><small>目前研究／為何適合</small><p>{mentor.researchNow}</p></div><div><small>若能指導，可從這個題目開始</small><p>{mentor.thesisTopic}</p></div><div><small>先確認</small><p>{mentor.advisorNote}</p></div><div><small>可寄出的 email</small><p className="email-subject">Subject: {mentor.emailSubject}</p><pre>{mentor.emailDraft}</pre></div></details><a href={mentor.link} target="_blank" rel="noreferrer">查看 ASU profile 與聯絡方式 ↗</a></article>)}</div><div className="research-method"><span>CoRAL 狀態</span><strong>Vivek Gupta 的 CoRAL 有碩士生入口，但主軸是 LLM 對表格、圖表、地圖等複雜資料的推理；目前維持備選，不佔你的主要研究機會。</strong><a href="https://forge.engineering.asu.edu/faculty_mentor/vivek-gupta/" target="_blank" rel="noreferrer">研究頁 ↗</a></div></section>}
 
-        {view === "plan" && <section className="workspace-panel" aria-labelledby="plan-title"><div className="workspace-heading"><div><p className="eyebrow">FALL 2026 → SUMMER 2028</p><h2 id="plan-title">兩年碩士學程規劃</h2></div><p>目前採非論文路徑：30 學分，最後以 SER 517 工程畢業專題收尾。這是預排，正式 iPOS、當期開課與先修條件仍以 advisor 為準。</p></div><div className="program-summary"><div><small>預計完成</small><strong>Summer 2028</strong></div><div><small>學位路徑</small><strong>非論文 · SER 517</strong></div><div><small>學分目標</small><strong>30 學分</strong></div></div><div className="requirement-key"><div><strong>12</strong><span>共同核心必修<br />Core requirements</span></div><div><strong>9</strong><span>專業領域必修<br />Concentration requirements</span></div><div><strong>6</strong><span>核准選修<br />Approved electives</span></div><div><strong>3</strong><span>工程畢業專題<br />Capstone</span></div></div><div className="program-timeline">{PROGRAM_TIMELINE.map((phase) => <article className={"program-phase " + phase.tone} key={phase.term}><div className="phase-rail"><span></span></div><div className="phase-head"><div><p className="mini-label">{phase.status}</p><h3>{phase.term}</h3><p>{phase.range}</p></div><strong>{phase.focus}</strong></div><div className="planned-courses"><small>預排課程</small><div>{phase.courses.map((course) => <span key={course}>{course}</span>)}</div></div><div className="term-progress"><div className="term-progress-head"><small>到這學期結束的累計進度</small><strong>總學分 {phase.progress.total}</strong></div><div><span>共同核心必修 <b>{phase.progress.core}</b></span><span>專業領域必修 <b>{phase.progress.concentration}</b></span><span>選修 <b>{phase.progress.elective}</b></span><span>畢業專題 <b>{phase.progress.capstone}</b></span></div></div><div className="phase-grid"><section><small>學分定位</small><p>{phase.study}</p></section><section><small>研究／作品</small><p>{phase.build}</p></section><section><small>職涯</small><p>{phase.career}</p></section></div><div className="phase-checkpoint"><small>學期 checkpoint</small><strong>{phase.checkpoint}</strong></div></article>)}</div><div className="plan-guardrail"><strong>排課前先核對：</strong>這張表依 AI Engineering MS Software Engineering concentration 的現行 handbook 排出 30-credit non-thesis 路徑。每次選課前仍要確認當期有開課、先修條件、是否可計入 iPOS，以及 SER 517 的 faculty / project approval。<a href="https://ai-ms.engineering.asu.edu/resources/" target="_blank" rel="noreferrer">官方 handbook ↗</a></div></section>}
+        {view === "plan" && <section className="workspace-panel" aria-labelledby="plan-title"><div className="workspace-heading"><div><p className="eyebrow">FALL 2026 → SUMMER 2028</p><h2 id="plan-title">兩年碩士學程規劃</h2></div><p>目前採非論文路徑：30 學分，最後以 SER 517 工程畢業專題收尾。這是預排，正式 iPOS、當期開課與先修條件仍以 advisor 為準。</p></div><div className="program-summary"><div><small>預計完成</small><strong>Summer 2028</strong></div><div><small>學位路徑</small><strong>非論文 · SER 517</strong></div><div><small>學分目標</small><strong>30 學分</strong></div></div><div className="requirement-key"><div><strong>12</strong><span>共同核心必修<br />Core requirements</span></div><div><strong>9</strong><span>專業領域必修<br />Concentration requirements</span></div><div><strong>6</strong><span>核准選修<br />Approved electives</span></div><div><strong>3</strong><span>工程畢業專題<br />Capstone</span></div></div><div className="program-timeline">{PROGRAM_TIMELINE.map((phase) => <article className={"program-phase " + phase.tone} key={phase.term}><div className="phase-rail"><span></span></div><div className="phase-head"><div><p className="mini-label">{phase.status}</p><h3>{phase.term}</h3><p>{phase.range}</p></div><strong>{phase.focus}</strong></div><div className="planned-courses"><small>預排課程</small><div>{phase.courses.map((course) => <span key={course}>{course}</span>)}</div></div><div className="term-progress"><div className="term-progress-head"><small>到這學期結束的累計進度</small><strong>總學分 {phase.progress.total}</strong></div><div><span>共同核心必修 <b>{phase.progress.core}</b></span><span>專業領域必修 <b>{phase.progress.concentration}</b></span><span>選修 <b>{phase.progress.elective}</b></span><span>畢業專題 <b>{phase.progress.capstone}</b></span></div></div><div className="phase-grid"><section><small>學分定位</small><p>{phase.study}</p></section><section><small>研究／作品</small><p>{phase.build}</p></section><section><small>職涯</small><p>{phase.career}</p></section></div><div className="phase-checkpoint"><small>學期 checkpoint</small><strong>{phase.checkpoint}</strong></div></article>)}</div><CoursePlanner coursePlan={coursePlan} draggedCourse={draggedCourse} onDragStart={setDraggedCourse} onDrop={moveCourse} /><div className="plan-guardrail"><strong>排課前先核對：</strong>這張表依 AI Engineering MS Software Engineering concentration 的現行 handbook 排出 30-credit non-thesis 路徑。每次選課前仍要確認當期有開課、先修條件、是否可計入 iPOS，以及 SER 517 的 faculty / project approval。<a href="https://ai-ms.engineering.asu.edu/resources/" target="_blank" rel="noreferrer">官方 handbook ↗</a></div></section>}
 
         {view === "immigration" && <section className="workspace-panel" aria-labelledby="immigration-title">
           <div className="workspace-heading">
@@ -283,7 +333,7 @@ export default function Home() {
             <span>名詞提示</span>
             <div><p>把游標移到帶點線的名詞上（或用鍵盤聚焦），就會看到說明。</p>{IMMIGRATION_GLOSSARY.map((entry) => <GlossaryTerm key={entry.label} label={entry.label} />)}</div>
           </div>
-          <section className="academic-prep" aria-labelledby="academic-prep-title">
+          {immigrationStage === 0 && <><section className="academic-prep" aria-labelledby="academic-prep-title">
             <div className="academic-prep-heading"><div><p className="mini-label">FROM THIS SEMESTER</p><h3 id="academic-prep-title">在學期間：把未來可選路徑一條條打開</h3></div><p>目的不是現在開始辦綠卡，而是讓 2028 畢業時有合規的工作授權、雇主看得懂的成果、以及不只一條求職路線。</p></div>
             <div className="academic-prep-list">
               {ACADEMIC_PREP.map((phase) => <article className={"academic-prep-phase " + phase.tone} key={phase.term}>
@@ -308,7 +358,7 @@ export default function Home() {
               <div><small>長線要保留什麼</small><strong>版本紀錄、技術決策、測試結果、客戶／教授回饋、外部採用、獎項或 grant；它們比創業公司名稱更有用。</strong></div>
             </div>
             <div className="founder-resources"><a href="https://issc.asu.edu/entrepreneur" target="_blank" rel="noreferrer">ASU ISSC · 創業與 F-1 規則 ↗</a><a href="https://entrepreneurship.asu.edu/programs/venture-devils/" target="_blank" rel="noreferrer">ASU Venture Devils · mentor、pitch 與 funding ↗</a><a href="https://www.uscis.gov/working-in-the-united-states/international-entrepreneur-rule" target="_blank" rel="noreferrer">USCIS · International Entrepreneur Rule ↗</a><a href="https://travel.state.gov/content/travel/en/us-visas/employment/treaty-trader-investor-visa-e.html" target="_blank" rel="noreferrer">Department of State · E-2 規則 ↗</a></div>
-          </section>
+          </section></>}
           <section className="scenario-panel" aria-labelledby="scenario-title">
             <div className="scenario-heading"><div><p className="mini-label">經驗分享裡最常遇到的分岔</p><h3 id="scenario-title">如果我遇到這種情況，下一步怎麼走？</h3></div><p>選一個情境，頁面會改成對應的可做選擇。這些是從 F-1 / OPT 社群經驗中整理出的常見模式，法規與個案結論以 ISSC、雇主律師為準。</p></div>
             <div className="scenario-choices" role="group" aria-label="選擇工作與移民情境">
@@ -320,7 +370,7 @@ export default function Home() {
             </div>
           </section>
           <div className="immigration-timeline">
-            {IMMIGRATION_STEPS.map((step) => <article className={"immigration-step " + step.tone} key={step.title}>
+            {IMMIGRATION_STEPS.slice(immigrationStage).map((step) => <article className={"immigration-step " + step.tone} key={step.title}>
               <div className="immigration-period"><small>{step.status}</small><strong>{step.period}</strong></div>
               <div className="immigration-body"><h3>{step.title}</h3><p>{step.action}</p></div>
               <div><small>你要留下的證據</small><p>{step.proof}</p></div>
