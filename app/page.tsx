@@ -250,7 +250,7 @@ export default function Home() {
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="回到頁首"><span>ASU</span><strong>Ian · Fall 2026</strong></a>
-        <nav aria-label="主要導覽">{NAV_ITEMS.map((item) => <button key={item.id} type="button" className={view === item.id ? "is-active" : ""} aria-current={view === item.id ? "page" : undefined} onClick={() => selectView(item.id)}>{item.label}</button>)}</nav>
+        <nav aria-label="主要導覽">{NAV_ITEMS.map((item) => <button key={item.id} type="button" className={view === item.id ? "is-active" : ""} aria-current={view === item.id ? "page" : undefined} onClick={() => selectView(item.id)}>{item.label}</button>)}<a className="language-toggle" href="/en">English</a></nav>
       </header>
       <div className="page app-shell" id="top">
         {view === "home" && <section className="workspace-panel calendar-panel" aria-labelledby="calendar-title">

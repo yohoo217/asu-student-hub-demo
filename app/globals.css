@@ -66,6 +66,13 @@ a:focus-visible, input:focus-visible, button:focus-visible, summary:focus-visibl
   text-decoration: none;
 }
 .site-header nav a:hover { color: var(--maroon); }
+.language-toggle { border: 1px solid var(--line); color: var(--maroon) !important; padding: 6px 9px; }
+.language-toggle:hover { border-color: var(--maroon); }
+.planning-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
+.planning-grid article { min-height: 210px; padding: 24px; background: var(--white); border: 1px solid var(--line); }
+.planning-grid b { color: var(--maroon); font-size: 1.6rem; }
+.planning-grid h3 { margin: 31px 0 9px; font-size: 1.18rem; }
+.planning-grid p { color: var(--muted); line-height: 1.65; }
 
 .page { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
 .hero {
@@ -623,7 +630,7 @@ footer p { margin: 0; }
   .site-header { padding: 0 18px; }
   .site-header nav { gap: 15px; }
   .hero { min-height: 500px; margin-top: 15px; padding: 58px 34px; }
-  .now-grid, .course-grid, .mentor-grid, .portal-grid, .money-grid, .workstream-grid { grid-template-columns: 1fr; }
+  .now-grid, .course-grid, .mentor-grid, .portal-grid, .money-grid, .workstream-grid, .planning-grid { grid-template-columns: 1fr; }
   .now-grid article { min-height: 96px; border-right: 0; border-bottom: 1px solid var(--line); }
   .now-grid article:last-child { border-bottom: 0; }
   .checklist-layout { grid-template-columns: 1fr; }
