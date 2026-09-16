@@ -345,14 +345,15 @@ footer p { margin: 0; }
 .task-group { padding: 21px; border: 1px solid var(--line); background: var(--white); }
 .task-group h3 { margin: 0 0 12px; font-size: 1.02rem; letter-spacing: -.03em; }
 .compact-task { padding: 11px 0; border-top: 1px solid var(--line); }
-.compact-task label { display: grid; grid-template-columns: 23px 1fr; gap: 10px; align-items: start; cursor: pointer; }
-.compact-task input { position: absolute; opacity: 0; pointer-events: none; }
-.compact-task .fake-check { width: 20px; height: 20px; margin: 1px 0 0; }
+.compact-task { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; }
+.compact-task .task-status { min-width: 74px; margin-top: 1px; border: 1px solid var(--maroon); background: #fff; color: var(--maroon); cursor: pointer; padding: 6px 8px; font-size: .65rem; font-weight: 850; line-height: 1.15; }
+.compact-task .task-status:hover { background: #f2e5e9; }
+.compact-task.is-done .task-status { border-color: var(--green); background: var(--green); color: #fff; }
+.compact-task > span { display: block; }
 .compact-task small { display: block; color: var(--maroon); font-family: var(--font-geist-mono), monospace; font-size: .58rem; font-weight: 850; }
 .compact-task strong { font-size: .73rem; line-height: 1.45; }
 .compact-task.is-done strong { color: var(--muted); text-decoration: line-through; }
-.compact-task.is-done .fake-check { border-color: var(--green); background: var(--green); color: #fff; }
-.compact-task details { margin: 8px 0 0 33px; color: var(--muted); font-size: .66rem; line-height: 1.55; }
+.compact-task details { grid-column: 2; margin: 8px 0 0; color: var(--muted); font-size: .66rem; line-height: 1.55; }
 .compact-task summary { color: var(--maroon); cursor: pointer; font-weight: 800; }
 .compact-task details p { margin: 8px 0; }
 .compact-task details div { display: flex; flex-wrap: wrap; gap: 6px 12px; }
@@ -629,6 +630,7 @@ footer p { margin: 0; }
 .planner-heading h3, .stage-selector h3 { margin: 7px 0; font-size: 1.35rem; }
 .planner-heading > p, .stage-selector > div:first-child > p:last-child { max-width: 330px; margin: 0; color: var(--muted); font-size: .84rem; line-height: 1.6; }
 .planner-launch-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 28px; padding: 20px 22px; border: 1px solid var(--line); background: #f0f4ef; }
+.planner-launch-top { margin-top: 22px; margin-bottom: 22px; }
 .planner-launch-row strong { display: block; margin-top: 5px; font-size: .86rem; }
 .planner-launch, .modal-close { border: 1px solid var(--maroon); background: var(--maroon); color: #fff; cursor: pointer; padding: 11px 14px; font-size: .78rem; font-weight: 850; white-space: nowrap; }
 .planner-launch:hover, .modal-close:hover { background: var(--maroon-dark); }
@@ -643,7 +645,7 @@ footer p { margin: 0; }
 .course-pool button, .planner-term button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding: 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: grab; font-size: .78rem; line-height: 1.35; text-align: left; }
 .course-pool button span, .planner-term button span { color: var(--maroon); font-size: .67rem; font-weight: 800; white-space: nowrap; }
 .planner-terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }.planner-term { min-height: 132px; }.planner-term > p { margin: 14px 0 0; color: var(--maroon); font-size: .75rem; font-weight: 700; }
-.stage-selector { display: grid; gap: 18px; margin: 24px 0; padding: 22px; background: var(--blue-soft); }.stage-track { display: grid; grid-template-columns: repeat(5, minmax(135px, 1fr)); overflow-x: auto; border: 1px solid #a9c3cf; background: #fff; }.stage-track button { position: relative; display: grid; min-height: 82px; grid-template-columns: 26px 1fr; align-items: center; gap: 9px; border: 0; border-right: 1px solid #c4d7df; background: #fff; color: #234c60; cursor: pointer; padding: 12px; text-align: left; }.stage-track button:last-child { border-right: 0; }.stage-track button span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; background: #dbeaf0; color: var(--blue); font-size: .67rem; font-weight: 900; }.stage-track button strong { font-size: .72rem; line-height: 1.35; }.stage-track button.is-selected { background: var(--blue); color: #fff; }.stage-track button.is-selected span { background: var(--gold); color: #211b10; }
+.stage-selector { display: grid; gap: 18px; margin: 24px 0; padding: 22px; background: var(--blue-soft); }.stage-track { display: grid; grid-template-columns: repeat(5, minmax(135px, 1fr)); overflow-x: auto; border: 1px solid #a9c3cf; background: #fff; }.stage-track button { position: relative; display: grid; min-height: 82px; grid-template-columns: 26px 1fr; align-items: center; gap: 9px; border: 0; border-right: 1px solid #c4d7df; background: #fff; color: #234c60; cursor: pointer; padding: 12px; text-align: left; }.stage-track button:last-child { border-right: 0; }.stage-track button:not(:last-child)::after { position: absolute; z-index: 2; top: 50%; right: -10px; display: grid; width: 20px; height: 20px; place-items: center; transform: translateY(-50%); border: 1px solid #a9c3cf; border-radius: 50%; background: #fff; color: var(--blue); content: "→"; font-size: .72rem; font-weight: 900; }.stage-track button span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; background: #dbeaf0; color: var(--blue); font-size: .67rem; font-weight: 900; }.stage-track button strong { font-size: .72rem; line-height: 1.35; }.stage-track button.is-selected { background: var(--blue); color: #fff; }.stage-track button.is-selected span { background: var(--gold); color: #211b10; }
 
 @media (max-width: 900px) {
   .page { width: min(100% - 30px, 720px); }
