@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { headers } from "next/headers";
 import "./globals.css";
+
+// This dashboard is entirely browser-based; render the routes at build time
+// so the same project can run on GitHub Pages without a server.
+export const dynamic = "force-static";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,28 +16,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const requestHeaders = await headers();
-  const host =
-    requestHeaders.get("x-forwarded-host") ??
-    requestHeaders.get("host") ??
-    "localhost:3000";
-  const protocol =
-    requestHeaders.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") ? "http" : "https");
-  const metadataBase = new URL(`${protocol}://${host}`);
-  const title = "ASU Student Dashboard | Fall 2026";
-  const description =
-    "A private-by-design Fall 2026 dashboard for class readiness, SCAI research and campus opportunities.";
+const title = "ASU Student Dashboard | Fall 2026";
+const description =
+  "A private-by-design Fall 2026 dashboard for class readiness, SCAI research and campus opportunities.";
 
-  return {
-    metadataBase,
-    title,
-    description,
-    openGraph: { title, description, type: "website" },
-    twitter: { card: "summary", title, description },
-  };
-}
+export const metadata: Metadata = {
+  title,
+  description,
+  openGraph: { title, description, type: "website" },
+  twitter: { card: "summary", title, description },
+};
 
 export default function RootLayout({
   children,

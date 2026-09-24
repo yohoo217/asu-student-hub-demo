@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-static";
+
 import { useEffect, useMemo, useState } from "react";
 
 type Task = {
@@ -315,7 +317,7 @@ export default function Home() {
     <main>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="回到頁首"><span>ASU</span><strong>Student Pathway</strong></a>
-        <nav aria-label="主要導覽">{NAV_ITEMS.map((item) => <button key={item.id} type="button" className={view === item.id ? "is-active" : ""} aria-current={view === item.id ? "page" : undefined} onClick={() => selectView(item.id)}>{item.label}</button>)}<a className="language-toggle" href="/en">English</a></nav>
+        <nav aria-label="主要導覽">{NAV_ITEMS.map((item) => <button key={item.id} type="button" className={view === item.id ? "is-active" : ""} aria-current={view === item.id ? "page" : undefined} onClick={() => selectView(item.id)}>{item.label}</button>)}<a className="language-toggle" href="./en.html">English</a></nav>
       </header>
       <div className="page app-shell" id="top">
         {view === "home" && <section className="pathway-home" aria-labelledby="pathway-title">
