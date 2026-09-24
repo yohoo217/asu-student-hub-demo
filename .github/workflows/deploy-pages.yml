@@ -32,6 +32,10 @@ jobs:
         run: npm ci
       - name: Build the static dashboard
         run: npm run build
+      - name: Align static asset paths for project Pages
+        run: |
+          mv dist/client/asu-student-hub-demo/_next dist/client/_next
+          rmdir dist/client/asu-student-hub-demo
       - name: Prepare GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site
